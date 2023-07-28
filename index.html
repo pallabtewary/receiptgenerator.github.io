@@ -101,18 +101,25 @@
       }
     }
 
-    function editExpense(index) {
-      editIndex = index;
-      const { date, description, amount } = expenses[index];
+     function editExpense(index) {
+    editIndex = index;
+    const { date, description, amount } = expenses[index];
+
+    // Delay the execution of the following code to allow the form to be cleared first
+    setTimeout(() => {
       document.getElementById("date").value = date !== "NA" ? new Date(date).toISOString().split("T")[0] : "";
       document.getElementById("description").value = description;
       document.getElementById("amount").value = amount.toFixed(2);
-    }
+    }, 10);
+  }
 
     function removeExpense(index) {
       totalAmount -= expenses[index].amount;
-      expenses.splice(index, 1);
-      updateReceiptContainer();
+    expenses.splice(index, 1);
+    editIndex = -1; // Reset editIndex to -1 to exit "edit" mode
+    updateReceiptContainer();
+    document.getElementById("expenseForm").reset();
+      
     }
 
     function updateReceiptContainer() {
