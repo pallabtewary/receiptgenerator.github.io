@@ -7,6 +7,8 @@
   <!-- pdfmake -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/pdfmake.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/vfs_fonts.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
   <style>
     @media (max-width: 768px) {
       .receipt-table {
@@ -102,7 +104,7 @@
     function editExpense(index) {
       editIndex = index;
       const { date, description, amount } = expenses[index];
-      document.getElementById("date").value = new Date(date).toISOString().split("T")[0];
+      document.getElementById("date").value = date !== "NA" ? new Date(date).toISOString().split("T")[0] : "";
       document.getElementById("description").value = description;
       document.getElementById("amount").value = amount.toFixed(2);
     }
@@ -122,8 +124,12 @@
           <td>${expense.description}</td>
           <td style="text-align: right;">₹${expense.amount.toFixed(2)}</td>
           <td>
-            <button type="button" class="btn btn-info btn-sm mr-2" onclick="editExpense(${index})">Edit</button>
-            <button type="button" class="btn btn-danger btn-sm" onclick="removeExpense(${index})">Remove</button>
+             <button type="button" class="btn btn-info btn-sm mr-2" onclick="editExpense(${index})">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeExpense(${index})">
+            <i class="fas fa-trash-alt"></i>
+          </button>
           </td>
         </tr>`;
       });
