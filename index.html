@@ -51,6 +51,7 @@
                   <th>Date</th>
                   <th>Description</th>
                   <th>Amount</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -58,7 +59,7 @@
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="3" class="text-right font-weight-bold">Total Amount:</td>
+                  <td colspan="4" class="text-right font-weight-bold">Total Amount:</td>
                   <td>₹0.00</td>
                 </tr>
               </tfoot>
@@ -72,6 +73,7 @@
   <script>
     let expenses = [];
     let totalAmount = 0;
+    let editIndex = -1;
 
     function addExpense() {
       const date = document.getElementById("date").value;
@@ -81,11 +83,34 @@
       const formattedDate = date ? new Date(date).toLocaleDateString() : "NA";
 
       if (description && !isNaN(amount)) {
-        expenses.push({ date: formattedDate, description, amount });
-        totalAmount += amount;
+        if (editIndex === -1) {
+          // Add new expense
+          expenses.push({ date: formattedDate, description, amount });
+          totalAmount += amount;
+        } else {
+          // Update existing expense
+          totalAmount += amount - expenses[editIndex].amount;
+          expenses[editIndex] = { date: formattedDate, description, amount };
+          editIndex = -1;
+        }
+
         document.getElementById("expenseForm").reset();
         updateReceiptContainer();
       }
+    }
+
+    function editExpense(index) {
+      editIndex = index;
+      const { date, description, amount } = expenses[index];
+      document.getElementById("date").value = new Date(date).toISOString().split("T")[0];
+      document.getElementById("description").value = description;
+      document.getElementById("amount").value = amount.toFixed(2);
+    }
+
+    function removeExpense(index) {
+      totalAmount -= expenses[index].amount;
+      expenses.splice(index, 1);
+      updateReceiptContainer();
     }
 
     function updateReceiptContainer() {
@@ -96,6 +121,10 @@
           <td style="color: ${expense.date === 'NA' ? 'gray' : 'black'}; line-height: 1.8em;">${expense.date}</td>
           <td>${expense.description}</td>
           <td style="text-align: right;">₹${expense.amount.toFixed(2)}</td>
+          <td>
+            <button type="button" class="btn btn-info btn-sm mr-2" onclick="editExpense(${index})">Edit</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="removeExpense(${index})">Remove</button>
+          </td>
         </tr>`;
       });
 
@@ -105,36 +134,36 @@
 
     function generateReceipt() {
       if (expenses.length === 0) {
-    alert("Add some expenses before generating the receipt.");
-    return;
-  }
+        alert("Add some expenses before generating the receipt.");
+        return;
+      }
 
-  const customerName = prompt("Please enter the customer name:");
-  if (!customerName) return;
+      const customerName = prompt("Please enter the customer name:");
+      if (!customerName) return;
 
-  const monthName = prompt("Please enter the month name:");
-  if (!monthName) return;
-  const spaces = " ".repeat(40 - monthName.length);
+      const monthName = prompt("Please enter the month name:");
+      if (!monthName) return;
+      const spaces = " ".repeat(40 - monthName.length);
 
-  const docDefinition = {
-    pageSize: 'A4',
-    pageOrientation: 'portrait',
-    pageMargins: [40, 40, 40, 60],
+      const docDefinition = {
+        pageSize: 'A4',
+        pageOrientation: 'portrait',
+        pageMargins: [40, 40, 40, 60],
 
-    // Add the background element with the page border
-    background: function (currentPage, pageSize) {
-      return {
-        canvas: [{
-      type: 'rect',
-      x: 20, // Adjust the X-coordinate to create a left margin
-      y: 20, // Adjust the Y-coordinate to create a top margin
-      w: pageSize.width - 40, // Adjust the width to create a right margin
-      h: pageSize.height - 60, // Adjust the height to create a bottom margin
-      lineWidth: 1, // Increase the border width to 4 points
-      lineColor: '#000'
-    }]
-      };
-    },
+        // Add the background element with the page border
+        background: function (currentPage, pageSize) {
+          return {
+            canvas: [{
+              type: 'rect',
+              x: 20, // Adjust the X-coordinate to create a left margin
+              y: 20, // Adjust the Y-coordinate to create a top margin
+              w: pageSize.width - 40, // Adjust the width to create a right margin
+              h: pageSize.height - 60, // Adjust the height to create a bottom margin
+              lineWidth: 1, // Increase the border width to 1 point
+              lineColor: '#000'
+            }]
+          };
+        },
 
         content: [
           { text: `${spaces}${monthName} - Expenses`, fontSize: 24, color: '#007BFF', alignment: 'right' },
@@ -145,8 +174,16 @@
               headerRows: 1,
               widths: ['auto', 'auto', '*', 'auto'],
               body: [
-                [{ text: 'Sl No', style: 'tableHeader', border: [false, false, false, false], borderColor: '#ccc' }, { text: 'Date', style: 'tableHeader', border: [false, false, false, false], borderColor: '#ccc' }, { text: 'Description', style: 'tableHeader', border: [false, false, false, false], borderColor: '#ccc' }, { text: 'Amount', style: 'tableHeader', border: [false, false, false, false], borderColor: '#ccc' }],
-                ...expenses.map((expense, index) => [{text: index+1, border: [false, false, false, false]}, { text: expense.date, color: expense.date === 'NA' ? 'gray' : 'black', border: [false, false, false, false], borderColor: 'gray' }, { text: expense.description, border: [false, false, false, false], borderColor: 'gray', alignment :'center' }, { text: `₹${expense.amount.toFixed(2)}`, alignment: 'right', border: [false, false, false, false], borderColor: 'gray' }])
+                                [{ text: 'Sl No', style: 'tableHeader', border: [false, false, false, false], borderColor: '#ccc' },
+                { text: 'Date', style: 'tableHeader', border: [false, false, false, false], borderColor: '#ccc' },
+                { text: 'Description', style: 'tableHeader', border: [false, false, false, false], borderColor: '#ccc' },
+                { text: 'Amount', style: 'tableHeader', border: [false, false, false, false], borderColor: '#ccc' }],
+                ...expenses.map((expense, index) => [
+                  { text: index + 1, border: [false, false, false, false] },
+                  { text: expense.date, color: expense.date === 'NA' ? 'gray' : 'black', border: [false, false, false, false], borderColor: 'gray' },
+                  { text: expense.description, border: [false, false, false, false], borderColor: 'gray', alignment: 'center' },
+                  { text: `₹${expense.amount.toFixed(2)}`, alignment: 'right', border: [false, false, false, false], borderColor: 'gray' },
+                ])
               ]
             }
           },
@@ -165,10 +202,10 @@
           }
         },
         layout: {
-          hLineWidth: function(i, node) {
+          hLineWidth: function (i, node) {
             return (i === 1 || i === node.table.body.length) ? 0 : 1;
           },
-          vLineWidth: function(i) {
+          vLineWidth: function (i) {
             return 0;
           }
         }
@@ -179,3 +216,4 @@
   </script>
 </body>
 </html>
+
